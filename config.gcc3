@@ -1,0 +1,27 @@
+# Compilers and programs used
+CC = gcc
+FC = g77
+RM = rm
+YACC = bison
+LEX = flex
+
+# Scanner flags
+YFLAGS = -v --defines=y.tab.h -o parser.tab.c
+LFLAGS =
+
+# Compile flags
+CFLAGS	= -g3 -Wall -pedantic -Wno-unknown-pragmas
+#CFLAGS	= -O3 -Wall -pedantic
+FFLAGS	= -g -w
+#FFLAGS	= -O3 -w
+
+#Linking flags
+#Electric Fence Helper
+#EFENCE  = -L. -lefence -lpthread
+
+SFX =
+LIBLAPACK = -llapack -lblas -lg2c-pic
+LIBS = -lnetcdf -lm
+
+LDFLAGS = $(CFLAGS) -static
+LDLIBS = $(EFENCE) $(LIBS)

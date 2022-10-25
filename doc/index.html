@@ -1,0 +1,543 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/xhtml1-strict.dtd">
+
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/xhtml;charset=utf-8" />
+    <title>PCAsuite</title>
+  </head>
+
+  <body>
+    <h1>PCAsuite</h1>
+
+    <h2><a name='Abstract'>Abstract</a></h2>
+      <p>
+        This program suite allows the user to compress Molecular Dynamics
+        (<acronym title='Molecular Dynamics'>MD</acronym>) trajectories using
+        Principal Component Analysis
+        (<acronym title='Principal Component Analysis'>PCA</acronym>)
+        algorithms. This technique offers a good compression ratio at the
+        expense of losing some precision in the trajectory.
+      </p>
+
+      <h2><a name='Overview'>Overview</a></h2>
+      <p>
+        People working with Molecular Dynamics simulations know that the output
+        files of their work are huge. But they need to save their work for later
+        study and available space disappears quickly. Traditional general
+        compression algorithms like
+        <acronym title='Lempel-Ziv-Welch'>LZW</acronym> has been used in order
+        to reduce the required space, but they usually does not perform well
+        with this kind of data. But we know that this data is no random, it
+        follows a pattern and has a well defined meaning which we can exploit
+        in our effort to reduce the size of the data. We also know that most of
+        the time, we does not need to store all the details. Higher frequency
+        movements can be due to temperature or other irrelevant factors for some
+        kinds of analysis.
+      </p>
+      <p>
+        This knowledge points us towards the use of
+        <acronym title='Principal Component Analysis'>PCA</acronym> techniques.
+        This methods try to change the coordinate space of the system being
+        analyzed to capture the maximum amount of variance with the minimum
+        effort. This methods also allows us to select the degree of fidelity to
+        the original trajectory that we need, so if we need a very accurate
+        trajectory, we can choose not to compress so much the data in order to
+        have more detail.
+      </p>
+      <p>
+        Principal Component Analysis is a technique used to reduce the
+        dimensionality of a dataset. It is an orthogonal linear transformation
+        that transforms data into a new coordinate system such that the greatest
+        variance by any projection of the data lays on the first coordinate,
+        the second greatest variance lays on the second and so on. When we get
+        the first coordinates, we are getting the movements that contribute most
+        to the variance of that dataset. In that case, the least coordinates can
+        be ignored because their contribution is very low, hence we store less
+        information but the analysis can be performed in the same way.
+      </p>
+
+    <h2><a name='Operation'>Operation</a></h2>
+      <p>
+        There are different ways to apply this technique. I will explain the
+        method used by this suite.
+      </p>
+      <p>
+        Let's suppose we have a <acronym title='Molecular Dynamics'>MD</acronym>
+        trajectory of N atoms and F frames. The first action is to prepare the
+        input for the real processing and compression. We must recenter the
+        different snapshots onto a representative structure in order to have a
+        good compression. This action is performed in three steps:
+      </p>
+      <ul>
+        <li>Recenter all the snapshots of the trajectory onto the first one</li>
+        <li>Compute the mean snapshot after the first recentering step</li>
+        <li>Recenter all the snapshots onto the computed mean</li>
+      </ul>
+      <p>
+        The recentering is performed looking for the best
+        <acronym title='Root Mean Squared deviation'>RMSd</acronym> fit.
+        This value can be computed using two different algorithms:
+      </p>
+      <ul>
+        <li>A standard, Kabsch-based,
+        <acronym title='Root Mean Squared deviation'>RMSd</acronym>
+        algorithm</li>
+        <li>A Gaussian algorithm that gives more weight to the still atoms and
+        less weight to the moving atoms</li>
+      </ul>
+      <p>
+        The gaussian algorithm may help to reduce the number of eigenvectors
+        needed for a given compression, thus reducing the size of the compressed
+        file. The gaussian algorithm also allows for other analysis, like the
+        hinge point prediction, much more difficult and imprecise using a
+        standard <acronym title='Root Mean Squared deviation'>RMSd</acronym>
+        algorithm.
+      </p>
+      <p>
+        The first step is to compute the covariance matrix of the trajectory,
+        where the random variables are the coordinates of the N atoms. This
+        leads to a symmetric square matrix of 3N*3N dimensions. Once we have
+        this matrix we diagonalize it in order to get the associated eigenvalues
+        and eigenvectors. It turns out that the sum of all the eigenvalues is
+        the total variance of the trajectory, and the individual eigenvalues is
+        the variance quantity explained by the corresponding eigenvector.
+      </p>
+      <p>
+        With this data we can select and save enough eigenvectors to preserve an
+        arbitrary amount of variance and discard the ones that give us little to
+        no information.
+      </p>
+      <p>
+        Once the eigenvectors has been selected, a projection of the original
+        data into the new coordinate space must be performed. The final output
+        of the algorithm must contain the mean structure, the eigenvectors and
+        the projections in order to restore the original file. Our suite also
+        stores some other kind of information like the eigenvalues and the atom
+        names to allow us to perform the analysis and manipulations in a quick
+        and more flexible way.
+      </p>
+
+  <h2><a name='FileFormats'>File formats</a></h2>
+    <p>
+      Through the evolution of this code, the format used by the compressed
+      files has changed along time. This suite works natively with the
+      <em>PCZ4</em> format, but it also supports reading of files written in
+      <em>PCZ2</em> and <em>PCZ3</em> formats. All the formats are binary-based,
+      being the PCZ2 and PCZ3 very similar and PCZ4 adding new features.
+    </p>
+    <p>
+      The most important difference between PCZ2/3 and PCZ4 is the lack of the
+      atom names in the former. This makes impossible to use
+      <a href='#MaskStrings'>masks</a> to select atoms.
+    </p>
+
+  <h2><a name='Installation'>Installation</a></h2>
+    <p>
+      The code is quite standard so no difficult steps will be needed. In the
+      first place, you need to download the tarball from
+      <a href='http://mmb.pcb.ub.es/software/pcasuite.tar.gz'>pcasuite.tar.gz</a>.
+      Once we have the tarball, we must uncompress it, enter into the newly
+      created <code>pcazip</code> folder and compile the source with
+      <code>make</code>.
+    </p>
+    <p>
+      Prior to executing the compilation we must choose a compiler and adjust
+      the Makefile with the proper flags. This is done through the
+      <code>config.mk</code> file. This file is a soft link to a file with the
+      proper flags. Some files for different compilers are provided:
+    </p>
+    <ul>
+      <li><code>config.gcc3</code> for the GCC v3 compiler series</li>
+      <li><code>config.gcc4</code> for the GCC v4 compiler series</li>
+      <li><code>config.intel</code> for the Intel compilers</li>
+      <li><code>config.xlc</code> for the IBM xl compilers</li>
+    </ul>
+    <p>
+      There is a default link to compile with GCC v4. In summary, the steps
+      needed to compile the application are:
+    </p>
+    <ol>
+      <li><kbd>$ wget http://mmb.pcb.ub.es/software/pcasuite.tar.gz</kbd></li>
+      <li><kbd>$ tar xf pcasuite.tar.gz</kbd></li>
+      <li><kbd>$ cd pcasuite</kbd></li>
+      <li><kbd>$ rm config.mk</kbd></li>
+      <li><kbd>$ ln -s config.gcc4 config.mk</kbd></li>
+      <li><kbd>$ make</kbd></li>
+    </ol>
+    <p>
+      This procedure compiles the source code and leave the binaries in the same
+      folder. This binaries can be moved to a proper place to be executed
+      easily.
+    </p>
+    <p>
+      Some adjustment may be required in order to have the code compiled if the
+      libraries required are not stored in standard paths. A local 
+      <code>config.mk</code> file can be generated to adapt the compiler to the
+      computer where the suite is being compiled.
+    </p>
+
+
+  <h2><a name='Utilities'>Utilities</a></h2>
+    <h3><a name='PCAzip'>PCAzip</a></h3>
+      <p>
+        This tool is the main compression engine. It performs the steps outlined
+        in the <a href='#Operation'>Operation</a> section. This tool reads the
+        trajectory, recenters the frames, computes the covariance matrix,
+        computes the eigenvectors, the projections for the trajectory onto the
+        new coordinate space and finally writes the compressed file.
+      </p>
+      <p>
+        Its operation mode is quite simple, just needing the input trajectory,
+        a PDB to get the atom names from and some CPU time. The syntax is the
+        next:
+        <kbd>$ pcazip -i &lt;input_trajectory&gt; -p &lt;input_PDB_file&gt; -o &lt;output_file&gt; [options]</kbd>
+      </p>
+      <p>
+        Complete list of supported options:
+      </p>
+      <dl>
+        <dt>-i &lt;input_file&gt;</dt>
+        <dd>Specifies the name of the file containing the trajectory in an
+        Amber-like format</dd>
+        <dt>-o &lt;output_file&gt;</dt>
+        <dd>Specifies the name of the file that will store the compressed
+        trajectory</dd>
+        <dt>-p &lt;pdb_file&gt;</dt>
+        <dd>Specifies the name of a PDB-like file containing the names for the
+        atoms in the input trajectory</dd>
+        <dt>-n &lt;number_of_atoms&gt;</dt>
+        <dd>Specifies how many atoms the trajectory has. It can be used when no
+        PDB file can be specified, but the functionalities that depends on the
+        atoms and residue names will be disabled</dd>
+        <dt>-m &lt;mask_file&gt;</dt>
+        <dd>Specifies the name of a PDB-like file containing the atoms that
+        should be taken into account when compressing the trajectory.
+        Only this atoms will be used in the compression process and only this
+        atoms will be in the output file</dd>
+        <dt>-M &lt;mask_string&gt;</dt>
+        <dd>Specifies a <a href='#MaskStrings'>mask string</a> for the selection
+        of the atoms. It serves the same purpose than the -m switch, but in
+        works in a descriptive way. The mask has the same form as the
+        Amber/ptraj masks</dd>
+        <dt>-e &lt;number_of_eigenvectors&gt;</dt>
+        <dd>Specifies the number of eigenvectors that must be stored in the
+        file</dd>
+        <dt>-q &lt;quality&gt;</dt>
+        <dd>Specifies the quality of the compression as a percentage value.
+        It represents the percentage of the total variance that must
+        be explained by the stored eigenvalues</dd>
+        <dt>-g</dt>
+        <dd>If specified, the protein recentering is performed with a gaussian
+        version of the
+        <acronym title='Root Mean Squared deviation'>RMSd</acronym> algorithm.
+        If not specified, a standard
+        <acronym title='Root Mean Squared deviation'>RMSd</acronym> algorithm
+        is used</dd>
+        <dt>-v</dt>
+        <dd>Makes the program more verbose, giving more information about its
+        progress</dd>
+        <dt>-h</dt>
+        <dd>Displays a short help for the user</dd>
+      </dl>
+      <p>
+        Examples of use:
+      </p>
+      <dl>
+        <dt>Compress a trajectory, including atom name information, with a 90%
+        of quality</dt>
+        <dd><kbd>$ pcazip -i traj.x -p traj.pdb -o traj.pcz</kbd></dd>
+        <dt>Compress a trajectory, without atom name information, with a 95% of
+        quality</dt>
+        <dd><kbd>$ pcazip -i traj.x -n numberOfAtoms -o traj.pcz -q 95</kbd></dd>
+        <dt>Compress a trajectory, including atom name information, using the
+        gaussian <acronym title='Root Mean Squared deviation'>RMSd</acronym> and
+        taking the first 20 eigenvectors</dt>
+        <dd><kbd>$ pcazip -i traj.x -p traj.pdb -o traj.pcz -e 20 -g</kbd></dd>
+        <dt>Compress the backbone of a trajectory, including atom name
+        information, and asking for a verbose output</dt>
+        <dd><kbd>$ pcazip -i traj.x -p traj.pdb -o traj.pcz -v -M @C,CA,N,O</kbd></dd>
+      </dl>
+
+    <h3><a name='PCAunzip'>PCAunzip</a></h3>
+      <p>
+        This tool serves the purpose of reconstructing the trajectory from the
+        compressed data. It works by retrieving the eigenvectors, the associate
+        projections, and operating with them until we accumulate the original
+        data. This tool is quite simple and easy to use, and mimics the
+        parameters of the other tools in the suite. This is the complete list
+        of supported options:
+      </p>
+      <dl>
+        <dt>-i &lt;input_file&gt;</dt>
+        <dd>Specifies the name of the file containing the compressed
+        trajectory</dd>
+        <dt>-o &lt;output_file&gt;</dt>
+        <dd>Specifies the name of the file that will store the uncompressed
+        trajectory in an Amber-like format</dd>
+        <dt>--pdb</dt>
+        <dd>If this flag is present, the output format is PDB. It is needed
+        that the compression was made giving a PDB in the compression
+        process</dd>
+        <dt>-v</dt>
+        <dd>Makes the program more verbose, giving more information about its
+        progress</dd>
+        <dt>-h</dt>
+        <dd>Displays a short help for the user</dd>
+      </dl>
+      <p>
+        Examples of use:
+      </p>
+      <dl>
+        <dt>Uncompress a trajectory to an Amber-like file</dt>
+        <dd><kbd>$ pcaunzip -i traj.pcz -o traj.x</kbd></dd>
+        <dt>Uncompress a trajectory to a PDB-like file</dt>
+        <dd><kbd>$ pcaunzip -i traj.pcz -o traj.x --pdb</kbd></dd>
+      </dl>
+
+    <h3><a name='PCZdump'>PCZdump</a></h3>
+      <p>
+        This is the tool used when we need to analyze and query the data stored
+        inside the compressed file. It allows the user to query for the values
+        stored directly in the file and also to compute other values based on
+        the stored ones.
+      </p>
+      <p>
+        The information that can be retrieved with this tool are:
+      </p>
+      <ul>
+        <li>Title of the trajectory</li>
+        <li>Number of atoms, eigenvectors and frames</li>
+        <li>Total and explained variance</li>
+        <li>Percentual quality of the compression</li>
+        <li>Dimensionality</li>
+        <li><acronym title='Root Mean Squared deviation'>RMSd</acronym> type
+        used in the compression</li>
+        <li>Whether or no the file contains atom names</li>
+        <li>Average structure</li>
+        <li>Eigenvalues</li>
+        <li>Eigenvectors</li>
+        <li>Projections</li>
+        <li><acronym title='Root Mean Squared deviation'>RMSd</acronym> between
+        frames</li>
+        <li>Atomic fluctuations and B-factors</li>
+        <li>Animations along an eigenvector</li>
+        <li>Lindemann coefficient</li>
+        <li>Indexes of collectivity movement</li>
+        <li>Force constants</li>
+        <li>Hinge points predictions</li>
+      </ul>
+      <p>
+        The supported options are:
+      </p>
+      <dl>
+        <dt>-i &lt;input_file&gt;</dt>
+        <dd>Specifies the name of the file containing the compressed
+        trajectory</dd>
+        <dt>-o &lt;output_file&gt;</dt>
+        <dd>Specifies the name of the file that will store the output of the
+        query</dd>
+        <dt>--info</dt>
+        <dd>Returns basic information of the file. It gives the title of the
+        trajectory, the Number of atoms, eigenvectors and frames, the total
+        and explained variance, the percentual quality of the compression,
+        the dimensionality, the
+        <acronym title='Root Mean Squared deviation'>RMSd</acronym> type used
+        in the compression and whether or no the file contains atom names</dd>
+        <dt>--avg</dt>
+        <dd>Returns the average structure stored in the compressed file</dd>
+        <dt>--evals</dt>
+        <dd>Returns the eigenvalues for the stored eigenvectors</dd>
+        <dt>--evec &lt;eigenvector&gt;</dt>
+        <dd>Returns the requested eigenvalue amongst the list of eigenvectors
+        stored in the compressed file</dd>
+        <dt>--proj &lt;eigenvector&gt;</dt>
+        <dd>Returns all the projections for the requested eigenvector</dd>
+        <dt>--rms &lt;frame&gt;</dt>
+        <dd>Computes the
+        <acronym title='Root Mean Squared deviation'>RMSd</acronym> between the
+        given frame and all the others</dd>
+        <dt>--fluc &lt;eigenvector&gt;</dt>
+        <dd>Computes the atomic fluctuations along trajectory for the requested
+        eigenvector, or for all the trajectory if none given</dd>
+        <dt>--bfactor</dt>
+        <dd>If this flag is present, the values of atomic fluctuation are given
+        as B-factor values</dd>
+        <dt>--anim &lt;eigenvector&gt;</dt>
+        <dd>Animates the system along the requested eigenvector</dd>
+        <dt>--lindemann</dt>
+        <dd>Computes the liquidity/solidity Lindemann coefficient</dd>
+        <dt>--collectivity &lt;eigenvector&gt;</dt>
+        <dd>Computes a collectivity index of movement for the requested
+        eigenvector</dd>
+        <dt>--forcecte &lt;temperature&gt;</dt>
+        <dd>Computes the force constants given a simulation temperature</dd>
+        <dt>--hinge</dt>
+        <dd>Computes hinge points predictions</dd>
+        <dt>--mask &lt;mask_string&gt;</dt>
+        <dd>Specifies a <a href='#MaskStrings'>mask string</a> for the selection
+        of the atoms. The mask has the same form as the Amber/ptraj masks</dd>
+        <dt>--pdb</dt>
+        <dd>If this flag is present, the output format is PDB, if suitable. It
+        is needed that the compression was made giving a PDB in the compression
+        process</dd>
+        <dt>--verbose</dt>
+        <dd>Makes the program more verbose, giving more information about its
+        progress</dd>
+        <dt>--help</dt>
+        <dd>Displays a short help for the user</dd>
+      </dl>
+        <p>
+          Examples of use:
+        </p>
+        <dl>
+          <dt>Obtain basic information about a file</dt>
+          <dd><kbd>$ pczdump -i traj.pcz --info</kbd></dd>
+          <dt>Obtain the eigenvalues and store the output in a file</dt>
+          <dd><kbd>$ pczdump -i traj.pcz --evals -o evals.dat</kbd></dd>
+          <dt>Obtain the first eigenvector and give the output in PDB
+          format</dt>
+          <dd><kbd>$ pczdump -i traj.pcz --evec 1 --pdb</kbd></dd>
+          <dt>Obtain the Lindemann coefficient for the sidechains</dt>
+          <dd><kbd>$ pczdump -i traj.pcz --lindemann --mask "~@C,CA,N,O"</kbd></dd>
+          <dt>Obtain the force constants for this simulation at 300&deg;K</dt>
+          <dd><kbd>$ pczdump -i traj.pcz --forcecte 300</kbd></dd>
+          <dt>Obtain the B-factors for the second eigenvector</dt>
+          <dd><kbd>$ pczdump -i traj.pcz --fluc=2 --bfactor</kbd></dd>
+        </dl>
+
+  <h2><a name='MaskStrings'>Mask Strings</a></h2>
+    <p>
+      Mask strings has been implemented to allow the users to specify the
+      atoms that must be used in a compression or analysis with ease, concisely
+      and without having to generate more files. They have a syntax very
+      similar to that used by Amber utilities but slightly different to allow
+      for greater flexibility.
+    </p>
+    <p>
+      The masks are composed of atom and residue specifications and the
+      connectors between them. Atoms are preceded by <em>@</em> and residues
+      by <em>:</em>. After one of those symbols comes the atom/residue
+      specification. It can come in numerical form, giving the atom or residue
+      number, or in alphabetical form, giving the atom or residue name.
+      Multiple specifications can be separated by commas, and when using
+      numeric specifications, ranges can be created by using dashes.
+      Some examples:
+    </p>
+    <ul>
+      <li><code>@C</code> represents all the Carbon atoms</li>
+      <li><code>:GLY</code> represents all the glycine residues</li>
+      <li><code>:1-10</code> represents the first 10 residues</li>
+      <li><code>@C,CA,N,O</code> represents all the atoms belonging to the
+      backbone</li>
+      <li><code>@2-5,7,9,15-30</code> represents all the atoms numbered from 2
+      to 5, 7, 9 and from 15 to 30</li>
+    </ul>
+    <p>
+      All of this specifications can be combined by means of logical
+      constructions and parenthesis. Logical AND (<code>&amp;</code>), logical
+      OR (<code>|</code>) and logical NOT (<code>~</code>) can be used and
+      combined. With this constructions we can ask for the residue 3 and the
+      atom 300 but not the atom 150 with this line:
+      <code>:3&amp;@300&amp;~@150</code>
+    </p>
+    <p>
+      The is also the chance of using wildcards to complete the names of atoms
+      and residues, so we can select all the Hydrogens with <code>@H*</code>.
+      More examples follows:
+    </p>
+    <ul>
+      <li><code>:10-20&amp;~@CA,C,N,O</code> represents the sidechains of the
+      residues 10 thru 20</li>
+      <li><code>:GLY|(@O*,N*&amp;~:GLU)</code> represents all the GLY residues
+      along with all the Oxygen and Nitrogen atoms that does not belong to GLU
+      residue</li>
+      <li><code>@O*&amp;~:GLY</code> represents all the Oxygen atoms that does
+      not belong to a Glycine</li>
+    </ul>
+
+  <h2><a name='Parallelism'>Parallelism in PCAzip</a></h2>
+  	<p>
+  		PCAzip is the most time-consuming application of the suite.
+  		The more consuming routines of the algorithm are the covariance matrix
+  		generation and the eigenvector calculus.
+  		This routines has been targeted for parallelization witn MPI, the
+  		standard paradigm for distributed memory parallelization of code.
+  	</p>
+  	<p>
+  		The paralellization of the eigenvector computation has been achieved
+  		through the use of the <a href="http://www.netlib.org/scalapack">ScaLAPACK
+  		library</a>, which is a highly optimized and portable library written
+  		in Fortran.
+  		Most hardware vendors offer their own optimized version for its own
+  		machines.
+  		The parallelization method of ScaLAPACK has been through MPI for
+  		distributed memory machines, which has conditioned the decision of
+  		using MPI for the parallelization of the covariance matrix calculus.
+  	</p>
+  	<p>
+  		The parallelization of the covariance matrix computation has been done
+  		with MPI because the ScaLAPACK library use this methodology, but also
+  		because is a more scalable technology than the ones for shared memory
+  		machines like OpenMP.
+  		Using shared memory machines we are limited to use only the processors
+  		physically present on the machine.
+  		No connection to other networked processors can be done.
+  		Using a distributed memory approach this limitation is overcomed and
+  		remote processors can be used, for example, the ones of a computer
+  		cluster.
+  		The parallelization effort is greater in the message passing paradigm,
+  		but it compensates by its scalability.
+  	</p>
+  	<p>
+  		After benchmarking the resulting code, we can see that the covariance
+  		matrix calculation scales really well, although the eigenvector
+  		calculation shows a poorer performance.
+  		This means that we must choose carefully the number of processors in
+  		order not to waste resources.
+  		If the matrix covariance calculus is expected to be heavier than the
+  		diagonalization, then more processors can be added without fear.
+  		But if the diagonalization process is the most time-consuming, then we
+  		must adjust the number of processors for a good efficiency of this step.
+  	</p>
+
+  <h2><a name='DeveloperInformation'>Information for developers</a></h2>
+    <p>
+      The source code of PCAzip utility has been prepared to support multiple
+      input file formats. This has been achieved through a file recognition
+      process.
+      It is very easy to add a new file format to the compressor, modifying only
+      one file and generating another.
+    </p>
+    <p>
+      The core of the file recognition engine are the methods in the
+      <code>traj_io.c</code> file.
+      When a file is opened with <code>trajopen</code> method, different input
+      modules are tried in order until we find a module that accepts this kind
+      of file.
+    </p>
+    <p>
+      The methods used to identify the files are stored in function pointer
+      arrays:
+    </p>
+    <ul>
+      <li><code>trjopen</code></li>
+      <li><code>trjsnap</code></li>
+      <li><code>trjFormatOK</code></li>
+      <li><code>trjclose</code></li>
+    </ul>
+    <p>
+      Each array contains a pointer to the methods used to open, read,
+      identify or close a format.
+      This means that you must provide a new C code file that provides the code
+      needed to open a file with the format you are interested in, the code
+      needed to read a snapshot from a previously opened file, the code
+      needed to identify a file with the format and the code needed to close
+      a file with the format.
+    </p>
+    <p>
+      Examples of this methods can be found in the <code>binpos_io.c</code>
+      file, which contains the code needed to read binpos binary files.
+    </p>
+
+  </body>
+</html>

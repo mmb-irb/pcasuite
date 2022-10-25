@@ -1,0 +1,30 @@
+# Compilers and programs used
+CC = xlc
+MPICC = mpicc
+FC = xlf
+RM = rm
+YACC = bison
+LEX = flex
+
+# Scanner flags
+YFLAGS = -v --defines=y.tab.h -o parser.tab.c
+LFLAGS =
+
+# Compile flags
+CFLAGS	= -g -qlanglvl=stdc89
+#CFLAGS	= -O3 -qlanglvl=stdc89
+FFLAGS	= -g
+#FFLAGS	= -O3
+
+#Linking flags
+#Electric Fence Helper
+#EFENCE  = -L. -lefence -lpthread
+
+SFX =
+LIBLAPACK = -L/gpfs/apps/LAPACK/lib64 -llapack -L/gpfs/apps/BLAS/blas-1.0.0/64/lib -lblas
+LIBSCALAPACK = -L/gpfs/apps/SCALAPACK/lib64 -lscalapack /gpfs/apps/SCALAPACK/lib64/blacsF77init_MPI-PPC-0.a /gpfs/apps/SCALAPACK/lib64/blacs_MPI-PPC-0.a /gpfs/apps/SCALAPACK/lib64/blacsF77init_MPI-PPC-0.a -lblas -L/opt/ibmcmp/xlf/10.1/lib64 -R/opt/ibmcmp/xlf/10.1/lib64 -L/opt/ibmcmp/xlsmp/1.5/lib64 -R/opt/ibmcmp/xlsmp/1.5/lib64 -lm -lessl -lxlf90_r -lxlomp_ser -lxlfmath -lmpichfarg
+LIBS = -lnetcdf -lm
+FUNDERSCORES =
+
+LDFLAGS = $(CFLAGS)
+LDLIBS = $(EFENCE) -L/gpfs/apps/ibmcmp/xlf/10.1/lib64 -lxlf90 $(LIBS)

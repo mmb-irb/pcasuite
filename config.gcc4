@@ -1,0 +1,31 @@
+# Compilers and programs used
+CC = gcc
+MPICC = mpicc.mpich-shmem
+FC = gfortran
+RM = rm
+YACC = bison
+LEX = flex
+
+# Scanner flags
+YFLAGS = -v --defines=y.tab.h -o parser.tab.c
+LFLAGS =
+
+# Compile flags
+CFLAGS	= -g3 -Wall -pedantic -Wno-unknown-pragmas
+#CFLAGS	= -g3 -Wall -pedantic -O3
+FFLAGS	= -g -w
+#FFLAGS	= -g -w -O3
+
+#Linking flags
+#Electric Fence Helper
+#EFENCE  = -L. -lefence -lpthread
+
+SFX =
+LIBLAPACK = -llapack -lblas -L/usr/lib/gcc/x86_64-linux-gnu/4.2 -lgfortran
+LIBSCALAPACK = -lscalapack-mpich -lblacs-mpich -L/usr/lib/gcc/x86_64-linux-gnu/4.2 -lgfortran
+LIBS = -lnetcdf -lm -lrt
+FUNDERSCORES = -DUNDERSCORES_FORTRAN_
+
+#LDFLAGS = $(CFLAGS) -static
+LDFLAGS = $(CFLAGS)
+LDLIBS = $(EFENCE) $(LIBS)

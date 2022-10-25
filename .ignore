@@ -1,0 +1,14 @@
+.tm_project.cache
+pcasuite.prj
+pcasuite.pws
+pcaunzip
+pcazip
+pczdump
+pczmaha
+callgrind*
+gmon.out
+update.sh
+*.pbs
+1ark*
+1b9p*
+

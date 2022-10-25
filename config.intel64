@@ -1,0 +1,28 @@
+# Compilers and programs used
+CC = icc
+FC = ifort
+YACC = bison
+LEX = flex
+
+# Scanner flags
+YFLAGS = -v --defines=y.tab.h -o parser.tab.c
+LFLAGS =
+
+# Compile flags
+#CFLAGS = -g -strict_ansi -w0 -Wcheck
+CFLAGS = -g -w0 -Wcheck -openmp -openmp-report1 -ipo
+#CFLAGS	= -O3 -strict_ansi -w0
+#FFLAGS	= -g
+FFLAGS	= -g -w
+#FFLAGS	= -O3 -w
+
+#Linking flags
+#Electric Fence Helper
+#EFENCE  = -L. -lefence -lpthread
+
+SFX =
+LIBLAPACK = -L/opt/intel/mkl/8.1/lib/64 -lmkl_lapack -lmkl_ipf -lguide
+LIBS = -lguide -lnetcdf -lm -lpthread
+
+LDFLAGS = -g -ipo
+LDLIBS = $(EFENCE) $(LIBS)

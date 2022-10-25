@@ -1,0 +1,30 @@
+# Compilers and programs used
+CC = icc
+MPICC = icc -lmpi
+FC = ifort
+YACC = bison
+LEX = flex
+
+# Scanner flags
+YFLAGS = -v --defines=y.tab.h -o parser.tab.c
+LFLAGS =
+
+# Compile flags
+CFLAGS = -g -strict_ansi -w0 -Wcheck -I/apps/NETCDF/3.6.2/include
+#CFLAGS	= -O3 -strict_ansi -w0
+#FFLAGS	= -g
+FFLAGS	= -g -w
+#FFLAGS	= -O3 -w
+
+#Linking flags
+#Electric Fence Helper
+#EFENCE  = -L. -lefence -lpthread
+
+SFX =
+LIBLAPACK = -L/opt/intel/mkl/8.1/lib/64 -lmkl_lapack -lmkl_ipf -lguide
+LIBSCALAPACK = -L/apps/SCALAPACK/1.8.0/lib -lscalapack /apps/SCALAPACK/1.8.0/lib/blacsF77init_MPI-LINUX-0.a /apps/SCALAPACK/1.8.0/lib/blacs_MPI-LINUX-0.a /apps/SCALAPACK/1.8.0/lib/blacsF77init_MPI-LINUX-0.a /apps/SCALAPACK/1.8.0/lib/blas_LINUX.a  -L/opt/intel/fc/10.0.023/lib -lifcore
+LIBS = -lguide -L/apps/NETCDF/3.6.2/lib -lnetcdf -lm -lpthread
+FUNDERSCORES = -DUNDERSCORES_FORTRAN_
+
+LDFLAGS = -g
+LDLIBS = $(EFENCE) $(LIBS)

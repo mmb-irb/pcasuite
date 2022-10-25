@@ -1,0 +1,31 @@
+# Compilers and programs used
+CC = gcc
+MPICC = mpicc.mpich-shmem
+FC = gfortran
+RM = rm
+YACC = bison
+LEX = flex
+
+# Scanner flags
+YFLAGS = -v --defines=y.tab.h -o parser.tab.c
+LFLAGS =
+
+# Compile flags
+CFLAGS	= -g3 -Wall -pedantic -Wno-unknown-pragmas -I /Users/pau/anaconda3/envs/compile/include
+#CFLAGS	= -g3 -Wall -pedantic -O3
+FFLAGS	= -g -w
+#FFLAGS	= -g -w -O3
+
+#Linking flags
+#Electric Fence Helper
+#EFENCE  = -L. -lefence -lpthread
+
+SFX =
+LIBLAPACK = -llapack -lblas -L/Users/pau/anaconda3/envs/compile/lib/ -lgfortran
+LIBSCALAPACK = -lscalapack-mpich -lblacs-mpich -L/Users/pau/anaconda3/envs/compile/lib/ -lgfortran
+LIBS = -L/Users/pau/anaconda3/envs/compile/lib/ -lnetcdf -lm
+FUNDERSCORES = -DUNDERSCORES_FORTRAN_
+
+#LDFLAGS = $(CFLAGS) -static
+LDFLAGS = $(CFLAGS)
+LDLIBS = $(EFENCE) $(LIBS)
