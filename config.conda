@@ -5,27 +5,22 @@ FC = gfortran
 RM = rm
 YACC = bison
 LEX = flex
+INCLUDE = /Users/pau/anaconda3/envs/compile/include
+LIB_DIR = /Users/pau/anaconda3/envs/compile/lib/
 
 # Scanner flags
 YFLAGS = -v --defines=y.tab.h -o parser.tab.c
-LFLAGS =
 
 # Compile flags
-CFLAGS	= -g3 -Wall -pedantic -Wno-unknown-pragmas -I /Users/pau/anaconda3/envs/compile/include
-#CFLAGS	= -g3 -Wall -pedantic -O3
+CFLAGS	= -g3 -Wall -pedantic -Wno-unknown-pragmas -I $(INCLUDE)
 FFLAGS	= -g -w
-#FFLAGS	= -g -w -O3
+
 
 #Linking flags
-#Electric Fence Helper
-#EFENCE  = -L. -lefence -lpthread
-
-SFX =
-LIBLAPACK = -llapack -lblas -L/Users/pau/anaconda3/envs/compile/lib/ -lgfortran
-LIBSCALAPACK = -lscalapack-mpich -lblacs-mpich -L/Users/pau/anaconda3/envs/compile/lib/ -lgfortran
-LIBS = -L/Users/pau/anaconda3/envs/compile/lib/ -lnetcdf -lm
+LIBLAPACK = -llapack -lblas -L$(LIB_DIR) -lgfortran
+LIBSCALAPACK = -lscalapack-mpich -lblacs-mpich -L$(LIB_DIR) -lgfortran
+LIBS = -L$(LIB_DIR) -lnetcdf -lm
 FUNDERSCORES = -DUNDERSCORES_FORTRAN_
 
-#LDFLAGS = $(CFLAGS) -static
 LDFLAGS = $(CFLAGS)
-LDLIBS = $(EFENCE) $(LIBS)
+LDLIBS = $(LIBS)
